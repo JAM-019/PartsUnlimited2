@@ -1,0 +1,52 @@
+name: Deploy to IIS
+
+on:
+  push:
+    branches: [main]
+    
+jobs:
+  deploy: 
+    runs-on: self-hosted
+    steps:
+      # Checkout repository to get deployment script
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # Download build artifacts
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: PartsUnlimited-Web
+          path: ./artifacts
+      
+      # Display artifact structure
+      - name: Display artifact structure
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "Artifact Contents" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+          Get-ChildItem -Path ./artifacts -Recurse | Select-Object FullName
+          Write-Host ""
+      
+      # Deploy to IIS
+      - name: Deploy to IIS
+        shell: powershell
+        run: |
+          Import-Module WebAdministration
+          
+          # Stop, copy, start - simple as that
+          Stop-WebAppPool -Name "PartsUnlimited1" -ErrorAction Ignore
+          Start-Sleep -Seconds 2
+          
+          Copy-Item -Path ".\artifacts\*" -Destination "C:\inetpub\wwwroot\PartsUnlimited1" -Recurse -Force
+          
+          Start-WebAppPool -Name "PartsUnlimited1" -ErrorAction Ignore
+          Start-Website -Name "PartsUnlimited1" -ErrorAction Ignore
+          
+          Write-Host "Deployed to http://localhost:8087"
+      
+      # Verify deployment
+      - name: Verify deployment
+        shell: powershell
+        run: |
+          Write-Host "Deployment complete - check http://localhost:8087"
