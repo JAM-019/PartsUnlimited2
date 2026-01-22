@@ -1,0 +1,61 @@
+name: CI - Build,Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs: 
+  ci:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Restore NuGet packages
+      run: nuget restore PartsUnlimited.sln
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build & Publish Website
+      run: |
+        msbuild `
+          src\PartsUnlimitedWebsite\PartsUnlimitedWebsite.csproj `
+          /p:Configuration=Release `
+          /p:Platform=AnyCPU `
+          /p:DeployOnBuild=true `
+          /p:WebPublishMethod=FileSystem `
+          /p:PublishUrl=..\..\artifact `
+          /p:DeployTarget=WebPublish
+            
+    - name: Build Test Projects
+      run: |
+        msbuild `
+          test\PartsUnlimited.UnitTests\PartsUnlimited.UnitTests.csproj `
+          /p:Configuration=Release `
+          /p:Platform=AnyCPU
+      continue-on-error: true
+        
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: PartsUnlimited-Web
+        path: artifact
