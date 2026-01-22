@@ -13,7 +13,9 @@ on:
           - staging
           - production
   push:
-    branches: ["main"]
+    branches: 
+      - main
+      - "copilot/**"
 
 jobs:
   build:
