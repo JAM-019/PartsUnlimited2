@@ -1,0 +1,60 @@
+name: Manual Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run against'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+  push:
+    branches: 
+      - main
+      - "copilot/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Display environment
+      run: |
+        echo "Running workflow on: ${{ github.event.inputs.environment || 'push event' }}"
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit SHA: ${{ github.sha }}"
+    
+    - name: List repository files
+      run: |
+        echo "=== Repository Structure ==="
+        ls -la
+        echo ""
+        echo "=== Source Directory ==="
+        ls -la src/ || echo "No src directory"
+    
+    - name: Display project info
+      run: |
+        echo "=== PartsUnlimited Project Information ==="
+        if [ -f "README.md" ]; then
+          echo "README.md found"
+          head -10 README.md
+        fi
+        if [ -f "PartsUnlimited.sln" ]; then
+          echo ""
+          echo "Solution file found: PartsUnlimited.sln"
+        fi
+    
+    - name: Success message
+      run: |
+        echo "✅ Workflow completed successfully!"
+        echo "This workflow demonstrates basic GitHub Actions functionality"
