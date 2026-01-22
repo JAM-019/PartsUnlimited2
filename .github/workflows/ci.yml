@@ -54,6 +54,7 @@ jobs:
       uses: github/codeql-action/analyze@v3
 
     - name: Debug Artifact Content
+      shell: cmd
       run: |
         echo "=== Checking artifact structure ==="
         dir artifact /s /b | findstr /i "\.png \.jpg \.jpeg" | head -20
